@@ -1,0 +1,16 @@
+%dw 2.0
+
+type auto_7f796c5a_8073_4511_8f9e_21a620650170_Output_Payload = {|
+  "0": org_mule_runtime_api_message_Message, 
+  "1": org_mule_runtime_api_message_Message_1
+|}
+type org_mule_runtime_api_message_Message_1 = {|
+  payload: {|  |}, 
+  attributes: Null
+|} {"typeId": "org.mule.runtime.api.message.Message"}
+
+
+type org_mule_runtime_api_message_Message = {| payload: Any |} {"typeId": "org.mule.runtime.api.message.Message"}
+
+
+
