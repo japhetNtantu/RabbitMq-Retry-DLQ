@@ -18,7 +18,7 @@ http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mo
 		<logger level="INFO" doc:name="Logger" doc:id="2357e2b7-f0bd-4fa4-ba4d-6077a79d2733" message="#[payload]"/>
 		<try doc:name="Try" doc:id="e2f8ca45-6a1a-4042-9988-28151322e9f4" >
 			<raise-error doc:name="Raise error" doc:id="b284f591-8628-4e76-8e06-c3d865682a49" type="MULE:CONNECTIVITY" description="Error connectivity" />
-			<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="2b6e06d9-eb25-4121-aba8-8139ec05a27e" variableName="uid" />
+<!-- [STUDIO:"Set Variable"]			<set-variable value="#[uuid()&#93;" doc:name="Set Variable" doc:id="2b6e06d9-eb25-4121-aba8-8139ec05a27e" variableName="uid" /> [STUDIO] -->
 			<scatter-gather doc:name="Scatter-Gather" doc:id="7d2dce33-7885-47ed-811c-1669fb7c5764">
 				<route>
 					<file:write doc:name="Write" doc:id="8f7789af-5a8b-42fd-b32a-8f7e763cdc3f" path='#["Documents/\SavedMessages" ++ "Rabbitpayload_" ++ (now()) as String {format : "yyyy_MM_dd_HH_mm_ss" } ++ ".json"]' mode="APPEND">
