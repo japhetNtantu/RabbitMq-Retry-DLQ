@@ -15,4 +15,7 @@ http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mo
 	<mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="ef46b924-a729-45e8-be33-95c91cfa0fda" >
 		<mongo:connection-string-connection connectionString="mongodb+srv://akbarkhan:vNhE1Ij7ZbyT2Jg1@cluster0.uoejkv3.mongodb.net/rabbitmq?retryWrites=true&amp;w=majority" />
 	</mongo:config>
+	<http:listener-config name="HTTP2" doc:name="HTTP Listener config" doc:id="c1ecd981-813f-4315-b6ed-a132893a3813" >
+		<http:listener-connection host="0.0.0.0" port="8084" />
+	</http:listener-config>
 </mule>

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:file="http://www.mulesoft.org/schema/mule/file"
-	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
-http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
 	<file:config name="File_Config" doc:name="File Config" doc:id="b0d2067f-89d5-41a1-abcc-40a833a250a0" />
 	<file:config name="File_Config1" doc:name="File Config" doc:id="7ba30d9a-87fc-44ff-b29a-013b3c336dfb" />
 	<flow name="rabbitqueuesFlow" doc:id="fc4c30d5-07de-4c36-8a91-2b8c352405ee" >
@@ -15,6 +16,7 @@ http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mo
 		<logger level="INFO" doc:name="Logger" doc:id="ff569426-1d85-498c-8e3e-6d25b44bbe00" message="End of the flow"/>
 	</flow>
 	<flow name="RetryandPostFlow" doc:id="7f796c5a-8073-4511-8f9e-21a620650170" >
+		<set-variable value="" doc:name="Set Variable" doc:id="49341abf-782e-4758-a132-806107437261" variableName="Varsid"/>
 		<logger level="INFO" doc:name="Logger" doc:id="2357e2b7-f0bd-4fa4-ba4d-6077a79d2733" message="#[payload]"/>
 		<try doc:name="Try" doc:id="e2f8ca45-6a1a-4042-9988-28151322e9f4" >
 			<raise-error doc:name="Raise error" doc:id="b284f591-8628-4e76-8e06-c3d865682a49" type="MULE:CONNECTIVITY" description="Error connectivity" />
@@ -40,22 +42,30 @@ http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mo
 }]]]></amqp:headers>
 						</amqp:message>
 					</amqp:publish>
+					<amqp:reject doc:name="Reject" doc:id="55eb4fc4-b605-47e8-9cc9-2c12b51f5ca8" ackId="#[vars.Varsid]"/>
 				</on-error-continue>
 			</error-handler>
 		</try>
 		<logger level="INFO" doc:name="Logger" doc:id="df59ac4f-ce29-45cf-b7b4-ace165d67c7a" message="End of the Flow"/>
 	</flow>
+	<flow name="rabbitqueuesFlow1" doc:id="ff150dfe-ddb3-4855-a35d-8c25174fa4fe" >
+		<http:listener doc:name="Listener" doc:id="fbe76257-ae0e-4f5a-8430-19ae08204ece" config-ref="HTTP2" path="/variables"/>
+		<set-variable value="" doc:name="Set Variable" doc:id="c1399f69-01cc-4ada-aa19-a845203c93fc" variableName="VarA"/>
+		<set-variable value="" doc:name="Set Variable" doc:id="03aa78f0-7d2c-436c-8c2c-99cd3a71e9d3" variableName="VarC"/>
+		<logger level="INFO" doc:name="Logger" doc:id="31c31f3a-303e-42e3-9507-4b1f8ceac079" />
+		<flow-ref doc:name="Flow Reference" doc:id="b146e6b4-e3e9-407a-8416-f413709013ca" name="ListenToDeadLandLinkedToThePublishFlow"/>
+	</flow>
+	<flow name="ListenerOriginalMessageFromTheRetryQueue" doc:id="4773189d-ffc5-49d4-813d-00c5f4d10f99">
+		<amqp:listener doc:name="Listener" doc:id="4f427ebb-7bb2-4811-b954-2b32c6c73b2e" config-ref="AMQP_Config" queueName="MessagingQueue" />
+		<logger level="INFO" doc:name="Logger" doc:id="991616a7-7a27-4f70-b9bf-6c8c41630073" message="#[payload]" />
+		<logger level="INFO" doc:name="Logger" doc:id="8e20951f-57ff-4cdc-bf4a-1c81e20214c7" message="entering the retry FLOW" />
+		<flow-ref doc:name="Flow Reference" doc:id="d6827275-3a34-43b9-969b-e2179acb281f" name="RetryandPostFlow" />
+	
+</flow>
 	<flow name="ListenToDeadLandLinkedToThePublishFlow" doc:id="5d2df830-bc2b-42f3-b3cb-3fd287e41376">
 		<amqp:listener doc:name="Listener" doc:id="1fffbca4-0965-40e3-8acc-c008ac9d0210" config-ref="AMQP_Config" queueName="MessagingQueue" />
 		<flow-ref doc:name="Flow Reference" doc:id="1f7fad31-def3-496e-9b94-4cf31995af2a" name="RetryandPostFlow" />
 	</flow>
-	<flow name="ListenerOriginalMessageFromTheRetryQueue" doc:id="4773189d-ffc5-49d4-813d-00c5f4d10f99" >
-		<amqp:listener doc:name="Listener" doc:id="4f427ebb-7bb2-4811-b954-2b32c6c73b2e" config-ref="AMQP_Config" queueName="MessagingQueue"/>
-		<logger level="INFO" doc:name="Logger" doc:id="991616a7-7a27-4f70-b9bf-6c8c41630073" message="#[payload]"/>
-		<logger level="INFO" doc:name="Logger" doc:id="8e20951f-57ff-4cdc-bf4a-1c81e20214c7" message="entering the retry FLOW"/>
-		<flow-ref doc:name="Flow Reference" doc:id="d6827275-3a34-43b9-969b-e2179acb281f" name="RetryandPostFlow"/>
-	
-</flow>
 <!-- [STUDIO:"RetryFlow"]	<flow name="RetryFlow" doc:id="6a49d4a1-16eb-47c9-8f40-2bdf0e2408c2" >
 		<amqp:listener doc:name="Listener" doc:id="a3efa7b8-c1f7-4bfd-aa1c-df6bf985d2a3" config-ref="AMQP_Config" queueName="deadL"/>
 		<logger level="INFO" doc:name="Logger" doc:id="472dd185-13a3-4cdc-81a9-d723837e6a44" message="#[payload&#93;"/>
