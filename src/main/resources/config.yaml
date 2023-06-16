@@ -1,0 +1,5 @@
+
+
+rabbitMQ:
+  retry: "3"
+  delay: "5000"

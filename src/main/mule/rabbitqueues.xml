@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
-	xmlns:file="http://www.mulesoft.org/schema/mule/file"
-	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:gmail="http://www.mulesoft.org/schema/mule/gmail" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
-http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/gmail http://www.mulesoft.org/schema/mule/gmail/current/mule-gmail.xsd">
 	<file:config name="File_Config" doc:name="File Config" doc:id="b0d2067f-89d5-41a1-abcc-40a833a250a0" />
 	<file:config name="File_Config1" doc:name="File Config" doc:id="7ba30d9a-87fc-44ff-b29a-013b3c336dfb" />
 	<flow name="rabbitqueuesFlow" doc:id="fc4c30d5-07de-4c36-8a91-2b8c352405ee" >
@@ -16,56 +17,56 @@ http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/m
 		<logger level="INFO" doc:name="Logger" doc:id="ff569426-1d85-498c-8e3e-6d25b44bbe00" message="End of the flow"/>
 	</flow>
 	<flow name="RetryandPostFlow" doc:id="7f796c5a-8073-4511-8f9e-21a620650170" >
-		<set-variable value="" doc:name="Set Variable" doc:id="49341abf-782e-4758-a132-806107437261" variableName="Varsid"/>
+<!-- [STUDIO:"Set Variable"]		<set-variable value="" doc:name="Set Variable" doc:id="49341abf-782e-4758-a132-806107437261" variableName="Varsid"/> [STUDIO] -->
+		<set-variable value="#[(attributes.headers.'x-retry-count' as Number) default 0]" doc:name="Set Variable Retry Count " doc:id="74bc5e59-51cb-43ed-a1db-768e44f2be7c" variableName="retry "/>
+		<set-variable value="10000" doc:name="Set Variable Retry delay" doc:id="bde2db95-0136-4d8d-96cc-dde939650bd8" variableName="retrydelay"/>
 		<logger level="INFO" doc:name="Logger" doc:id="2357e2b7-f0bd-4fa4-ba4d-6077a79d2733" message="#[payload]"/>
-		<try doc:name="Try" doc:id="e2f8ca45-6a1a-4042-9988-28151322e9f4" >
-			<raise-error doc:name="Raise error" doc:id="b284f591-8628-4e76-8e06-c3d865682a49" type="MULE:CONNECTIVITY" description="Error connectivity" />
-			<scatter-gather doc:name="Scatter-Gather" doc:id="7d2dce33-7885-47ed-811c-1669fb7c5764">
-				<route>
-					<file:write doc:name="Write" doc:id="8f7789af-5a8b-42fd-b32a-8f7e763cdc3f" path='#["Documents/\SavedMessages" ++ "Rabbitpayload_" ++ (now()) as String {format : "yyyy_MM_dd_HH_mm_ss" } ++ ".json"]' mode="APPEND">
-			<file:content><![CDATA[#[{
-"id": uuid(),
-
-}]]]></file:content>
-		</file:write>
-				</route>
-				<route>
-					<mongo:insert-document doc:name="Insert document" doc:id="894182a0-90db-4b69-a6d1-a42830ce73c6" config-ref="MongoDB_Config" collectionName="messages" />
-				</route>
-			</scatter-gather>
-			<error-handler >
-				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="52019574-c34f-4db3-880c-65bc4726df78">
-					<amqp:publish doc:name="Publish" doc:id="536eb3f0-6420-4cdd-832f-28893f150b93" config-ref="AMQP_Config" exchangeName="Retry-Exchange" >
-						<amqp:message >
-							<amqp:headers ><![CDATA[#[{
-	"x-delay": 10000
+		<raise-error doc:name="Raise error &gt; On Error Continue" doc:id="b284f591-8628-4e76-8e06-c3d865682a49" type="MULE:CONNECTIVITY" description="Error connectivity" />
+		<mongo:insert-document doc:name="Insert document in MongoDB" doc:id="894182a0-90db-4b69-a6d1-a42830ce73c6" config-ref="MongoDB_Config" collectionName="messages" />
+		<logger level="INFO" doc:name="Logger" doc:id="df59ac4f-ce29-45cf-b7b4-ace165d67c7a" message="End of the Flow"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="52019574-c34f-4db3-880c-65bc4726df78">
+					<logger level="INFO" doc:name="Logger" doc:id="8f150c3b-b974-4beb-a1ff-d335dc8c8e2e" message="#[p('rabbitMQ.retry')]"/>
+				<set-variable value="#[vars.retry as Number + 1]" doc:name="Set Variable" doc:id="89781e3e-dc02-496a-8d85-a31c1bb5c828" variableName="retry" />
+				<choice doc:name="Choice" doc:id="7bfbbe03-fac0-400a-ac0a-975c1c246828">
+						<when expression="#[vars.retry &lt;= p('rabbitMQ.retry')]">
+							<amqp:publish doc:name="Publish" doc:id="536eb3f0-6420-4cdd-832f-28893f150b93" config-ref="AMQP_Config" exchangeName="Retry-Exchange">
+						<amqp:message>
+							<amqp:headers><![CDATA[#[{
+	"x-delay": vars.retrydelay,
+	'x-retry-count': vars.Retry
 }]]]></amqp:headers>
 						</amqp:message>
 					</amqp:publish>
-					<amqp:reject doc:name="Reject" doc:id="55eb4fc4-b605-47e8-9cc9-2c12b51f5ca8" ackId="#[vars.Varsid]"/>
+						</when>
+					<otherwise>
+							<amqp:publish doc:name="Publish" doc:id="dea1db53-85c4-4f85-a83e-c469bcc72c27" config-ref="AMQP_Config" exchangeName="dead-letter-exchange" />
+						</otherwise>
+					</choice>
+<!-- [STUDIO:"Reject"]					<amqp:reject doc:name="Reject" doc:id="55eb4fc4-b605-47e8-9cc9-2c12b51f5ca8" ackId="#[vars.Varsid&#93;"/> [STUDIO] -->
 				</on-error-continue>
-			</error-handler>
-		</try>
-		<logger level="INFO" doc:name="Logger" doc:id="df59ac4f-ce29-45cf-b7b4-ace165d67c7a" message="End of the Flow"/>
+		</error-handler>
 	</flow>
-	<flow name="rabbitqueuesFlow1" doc:id="ff150dfe-ddb3-4855-a35d-8c25174fa4fe" >
+<!-- [STUDIO:"rabbitqueuesFlow1"]	<flow name="rabbitqueuesFlow1" doc:id="ff150dfe-ddb3-4855-a35d-8c25174fa4fe" >
 		<http:listener doc:name="Listener" doc:id="fbe76257-ae0e-4f5a-8430-19ae08204ece" config-ref="HTTP2" path="/variables"/>
 		<set-variable value="" doc:name="Set Variable" doc:id="c1399f69-01cc-4ada-aa19-a845203c93fc" variableName="VarA"/>
 		<set-variable value="" doc:name="Set Variable" doc:id="03aa78f0-7d2c-436c-8c2c-99cd3a71e9d3" variableName="VarC"/>
 		<logger level="INFO" doc:name="Logger" doc:id="31c31f3a-303e-42e3-9507-4b1f8ceac079" />
 		<flow-ref doc:name="Flow Reference" doc:id="b146e6b4-e3e9-407a-8416-f413709013ca" name="ListenToDeadLandLinkedToThePublishFlow"/>
-	</flow>
+	</flow> [STUDIO] -->
 	<flow name="ListenerOriginalMessageFromTheRetryQueue" doc:id="4773189d-ffc5-49d4-813d-00c5f4d10f99">
 		<amqp:listener doc:name="Listener" doc:id="4f427ebb-7bb2-4811-b954-2b32c6c73b2e" config-ref="AMQP_Config" queueName="MessagingQueue" />
-		<logger level="INFO" doc:name="Logger" doc:id="991616a7-7a27-4f70-b9bf-6c8c41630073" message="#[payload]" />
-		<logger level="INFO" doc:name="Logger" doc:id="8e20951f-57ff-4cdc-bf4a-1c81e20214c7" message="entering the retry FLOW" />
-		<flow-ref doc:name="Flow Reference" doc:id="d6827275-3a34-43b9-969b-e2179acb281f" name="RetryandPostFlow" />
+		<logger level="INFO" doc:name="Logger payload" doc:id="991616a7-7a27-4f70-b9bf-6c8c41630073" message="#[payload]" />
+		<logger level="INFO" doc:name="Logger entering the retry FLOW" doc:id="8e20951f-57ff-4cdc-bf4a-1c81e20214c7" message="entering the retry FLOW" />
+		<flow-ref doc:name="Flow Reference to the RetryFlow" doc:id="d6827275-3a34-43b9-969b-e2179acb281f" name="RetryandPostFlow" />
 	
 </flow>
-	<flow name="ListenToDeadLandLinkedToThePublishFlow" doc:id="5d2df830-bc2b-42f3-b3cb-3fd287e41376">
-		<amqp:listener doc:name="Listener" doc:id="1fffbca4-0965-40e3-8acc-c008ac9d0210" config-ref="AMQP_Config" queueName="MessagingQueue" />
-		<flow-ref doc:name="Flow Reference" doc:id="1f7fad31-def3-496e-9b94-4cf31995af2a" name="RetryandPostFlow" />
-	</flow>
+	<flow name="SaveTheDeadLetterPayload" doc:id="5d2df830-bc2b-42f3-b3cb-3fd287e41376">
+		<amqp:listener doc:name="Listener" doc:id="1fffbca4-0965-40e3-8acc-c008ac9d0210" config-ref="AMQP_Config" queueName="deadL" />
+		<file:write doc:name="Saved the dead letter payload in a File " doc:id="cfce45a9-289b-4023-a81c-03a3da44c921" path='#["C:/Users/Japhet/Documents/rabbitMQ/DLQ_Message_time_" ++ (now()) as String {format : "yyyyMMddHHmmss" } ++ "uid"++ uuid() ++ ".json"]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="0aa32884-d8a4-4d5b-8c69-d5a929bf45f2" message="end of the flow payload saved "/>
+	
+</flow>
 <!-- [STUDIO:"RetryFlow"]	<flow name="RetryFlow" doc:id="6a49d4a1-16eb-47c9-8f40-2bdf0e2408c2" >
 		<amqp:listener doc:name="Listener" doc:id="a3efa7b8-c1f7-4bfd-aa1c-df6bf985d2a3" config-ref="AMQP_Config" queueName="deadL"/>
 		<logger level="INFO" doc:name="Logger" doc:id="472dd185-13a3-4cdc-81a9-d723837e6a44" message="#[payload&#93;"/>

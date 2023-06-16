@@ -18,4 +18,5 @@ http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mo
 	<http:listener-config name="HTTP2" doc:name="HTTP Listener config" doc:id="c1ecd981-813f-4315-b6ed-a132893a3813" >
 		<http:listener-connection host="0.0.0.0" port="8084" />
 	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="55b77bf6-ede4-43c7-a0aa-d59c1790626c" file="config.yaml" />
 </mule>
